@@ -28,11 +28,13 @@ export const register: Register = on => {
     return next(e)
   })
 
-  // Die Antwort auf /egm zeichnet unten (CommandOutput) die Knöpfe in den Chat: Das tut jede Oberfläche,
-  // auch die App bei Cloud-Sitzungen, die keine Seitenleiste zeigt. Der Text bleibt für das Modell.
+  // Die Antwort auf /egm: Wo die Oberfläche zeichnet, stehen unten (CommandOutput) Knöpfe an ihrer Stelle.
+  // Die App zeigt bei Cloud-Sitzungen nur den Text (Stand 11.11.2026), darum ist der Text selbst eine
+  // vollständige Übersicht zum Abtippen.
   on('command.run', { command: 'egm' }, async $ => {
-    const opened = await $.ui.open({ id: PANE, title: 'EGM' })
-    return { text: opened.isPlaced ? 'EGM-Knöpfe hier und in der Seitenleiste.' : 'EGM-Knöpfe hier im Chat.' }
+    void $.ui.open({ id: PANE, title: 'EGM' })
+    const rows = COMMANDS.map(c => `| \`/egm:egm-${c.key}\` | ${c.hint} |`)
+    return { text: ['EGM-Befehle: eintippen, Thema oder Datei dahinter, Enter.', '', '| Befehl | Was er tut |', '|---|---|', ...rows].join('\n') }
   })
 
   on('command.run', { command: 'egm-leiste' }, async $ => {

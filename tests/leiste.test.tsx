@@ -48,3 +48,16 @@ test('die Seitenleiste zeigt die Knöpfe auf jeder Oberfläche, auf dem Handy mi
   expect(await phone.find({ type: 'Text', text: /Goldfische ohne Vorwissen/ })).toBeDefined()
   await phone.unmount()
 })
+
+test('die Antwort auf /egm zeigt die Knöpfe im Chat, auf jeder Oberfläche', async ($, on) => {
+  const filled: string[] = []
+  on('prompt.fill', (_, e) => { filled.push(e.text); return { isFilled: true } })
+
+  for (const surface of ['terminal', 'desktop', 'vscode', 'mobile'] as const) {
+    const ui = await $.ui.mount({ plugin: 'egm-knoepfe', component: 'CommandOutput', surface,
+      props: { command: 'egm', args: '', text: 'EGM-Knöpfe hier im Chat.', isErrored: false } })
+    await ui.press({ key: 'c-resolve-btn' })
+    await ui.unmount()
+  }
+  expect(filled).toEqual(Array(4).fill('/egm:egm-resolve '))
+})

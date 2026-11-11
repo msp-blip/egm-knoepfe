@@ -1,5 +1,5 @@
 import { atom, read, update } from 'claude-code'
-import type { Register } from 'claude-code'
+import type { EngineInterface, Register, RenderInput } from 'claude-code'
 
 // Die Befehle des EGM-Plugins (google/elephant-goldfish-model) in der Reihenfolge des Ablaufs, mit
 // der Erklärung, die beim Drüberfahren erscheint. Ein Druck schreibt den Befehl ins Eingabefeld,
@@ -28,9 +28,11 @@ export const register: Register = on => {
     return next(e)
   })
 
+  // Die Antwort auf /egm zeichnet unten (CommandOutput) die Knöpfe in den Chat: Das tut jede Oberfläche,
+  // auch die App bei Cloud-Sitzungen, die keine Seitenleiste zeigt. Der Text bleibt für das Modell.
   on('command.run', { command: 'egm' }, async $ => {
-    await $.ui.open({ id: PANE, title: 'EGM' })
-    return { text: 'EGM-Seitenleiste geöffnet.' }
+    const opened = await $.ui.open({ id: PANE, title: 'EGM' })
+    return { text: opened.isPlaced ? 'EGM-Knöpfe hier und in der Seitenleiste.' : 'EGM-Knöpfe hier im Chat.' }
   })
 
   on('command.run', { command: 'egm-leiste' }, async $ => {
@@ -66,26 +68,31 @@ export const register: Register = on => {
     )
   })
 
-  // Die Seitenleiste: ein Knopf je Befehl untereinander. Mit Maus erscheint die Erklärung beim
-  // Drüberfahren unter dem Knopf; auf dem Handy gibt es kein Drüberfahren, dort steht sie immer da.
-  on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
-    const { Box, Button, Text } = $.ui.resolve(e)
-    const fill = (key: string) => () => void $.prompt.fill({ text: `/egm:egm-${key} `, mode: 'replace' })
-    const alwaysShown = e.surface === 'mobile'
+  // Die Knöpfe untereinander, für die Seitenleiste und die Antwort auf /egm. Mit Maus erscheint die
+  // Erklärung beim Drüberfahren unter dem Knopf; auf dem Handy gibt es kein Drüberfahren, dort steht sie
+  // immer da. `site` hält die Schlüssel der beiden Orte auseinander.
+  on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => drawColumn($, e, 'p'))
+  on('ui.render', { component: 'CommandOutput', props: { command: 'egm' } }, async ($, e) => drawColumn($, e, 'c'))
+}
 
-    return (
-      <Box flexDirection="column" gap={1}>
-        <Text dimColor>Klick schreibt den Befehl ins Eingabefeld, dann Thema oder Datei dahinter und Enter.</Text>
-        {COMMANDS.map(c => (
-          <Box key={`p-${c.key}`} flexDirection="column">
-            <Button key={`p-${c.key}-btn`} label={c.label} variant={c.key === 'brainstorm' ? 'primary' : undefined}
-              dimColor={c.key === 'bootstrap'} onPress={fill(c.key)} />
-            {alwaysShown
-              ? <Text dimColor>{c.hint}</Text>
-              : <Box display="none" hover={{ display: 'flex' }}><Text dimColor>{c.hint}</Text></Box>}
-          </Box>
-        ))}
-      </Box>
-    )
-  })
+// Eine Spalte mit allen Knöpfen; ein Druck schreibt den Befehl ins Eingabefeld.
+function drawColumn($: EngineInterface, e: RenderInput<'Pane' | 'CommandOutput'>, site: string) {
+  const { Box, Button, Text } = $.ui.resolve(e)
+  const fill = (key: string) => () => void $.prompt.fill({ text: `/egm:egm-${key} `, mode: 'replace' })
+  const alwaysShown = e.surface === 'mobile'
+
+  return (
+    <Box flexDirection="column" gap={1}>
+      <Text dimColor>Klick schreibt den Befehl ins Eingabefeld, dann Thema oder Datei dahinter und Enter.</Text>
+      {COMMANDS.map(c => (
+        <Box key={`${site}-${c.key}`} flexDirection="column">
+          <Button key={`${site}-${c.key}-btn`} label={c.label} variant={c.key === 'brainstorm' ? 'primary' : undefined}
+            dimColor={c.key === 'bootstrap'} onPress={fill(c.key)} />
+          {alwaysShown
+            ? <Text dimColor>{c.hint}</Text>
+            : <Box display="none" hover={{ display: 'flex' }}><Text dimColor>{c.hint}</Text></Box>}
+        </Box>
+      ))}
+    </Box>
+  )
 }

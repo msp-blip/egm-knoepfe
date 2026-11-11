@@ -3,7 +3,10 @@
 Eine Knopfleiste über dem Eingabefeld von Claude Code für die Befehle des EGM-Plugins von Google
 (github.com/google/elephant-goldfish-model). Jeder Knopf schreibt seinen Befehl ins Eingabefeld, dahinter
 kommt das Thema oder der Dateipfad, dann Enter. Fährt die Maus über einen Knopf, steht darunter, was der
-Befehl tut. `/egm-leiste` oder × blendet die Leiste aus und wieder ein. Setzt das EGM-Plugin voraus
+Befehl tut. `/egm-leiste` oder × blendet die Leiste aus und wieder ein. Die Leiste zeichnen nur das
+Terminal und die lokale Desktop-App; überall sonst (Cloud-Sitzungen in der App, Handy) gibt es dieselben
+Knöpfe als Seitenleiste, die beim Start aufgeht und sich mit `/egm` wieder öffnen lässt. Auf dem Handy steht
+die Erklärung immer unter dem Knopf. Setzt das EGM-Plugin voraus
 (`claude plugin marketplace add google/elephant-goldfish-model && claude plugin install egm@egm`).
 
 ## Installieren

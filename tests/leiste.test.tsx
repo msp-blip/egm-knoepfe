@@ -25,3 +25,26 @@ test('× blendet die Leiste aus', async $ => {
   expect(await ui.find({ key: 'brainstorm' })).toBeUndefined()
   await ui.unmount()
 })
+
+const PANE = {
+  plugin: 'egm-knoepfe',
+  component: 'Pane',
+  requestId: 'egm',
+  props: { title: 'EGM', isFocused: false, bodyColumns: 40, placement: 'dock', scroll: { offset: 0, bodyRows: 30 }, view: {} },
+} as const
+
+test('die Seitenleiste zeigt die Knöpfe auf jeder Oberfläche, auf dem Handy mit Erklärung', async ($, on) => {
+  const filled: string[] = []
+  on('prompt.fill', (_, e) => { filled.push(e.text); return { isFilled: true } })
+
+  for (const surface of ['terminal', 'desktop', 'vscode', 'mobile'] as const) {
+    const ui = await $.ui.mount({ ...PANE, surface })
+    await ui.press({ key: 'p-draft-btn' })
+    await ui.unmount()
+  }
+  expect(filled).toEqual(Array(4).fill('/egm:egm-draft '))
+
+  const phone = await $.ui.mount({ ...PANE, surface: 'mobile' })
+  expect(await phone.find({ type: 'Text', text: /Goldfische ohne Vorwissen/ })).toBeDefined()
+  await phone.unmount()
+})

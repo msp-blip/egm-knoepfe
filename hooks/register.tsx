@@ -14,13 +14,23 @@ const COMMANDS = [
   { key: 'bootstrap', label: 'READMEs', hint: 'Legt README-Dateien für die Ordner eines Projektteils an. Schreibt Dateien, nur bewusst starten.' },
 ] as const
 
+const PANE = 'egm'
 const isHidden = atom({ plugin: 'egm-knoepfe', key: 'isHidden' } as const, false)
 
 export const register: Register = on => {
-  // /egm-leiste blendet die Leiste aus und wieder ein.
+  // /egm öffnet die Seitenleiste (die gibt es auf jeder Oberfläche, auch in Cloud-Sitzungen in der App
+  // und auf dem Handy); /egm-leiste blendet die Leiste über dem Eingabefeld aus und ein (nur Terminal
+  // und lokale Desktop-App zeichnen sie).
   on('session.start', async ($, e, next) => {
-    await $.command.register({ name: 'egm-leiste', description: 'EGM-Knopfleiste ein- oder ausblenden' })
+    await $.command.register({ name: 'egm', description: 'EGM-Knöpfe als Seitenleiste öffnen' })
+    await $.command.register({ name: 'egm-leiste', description: 'EGM-Leiste über dem Eingabefeld ein- oder ausblenden' })
+    void $.ui.open({ id: PANE, title: 'EGM' })
     return next(e)
+  })
+
+  on('command.run', { command: 'egm' }, async $ => {
+    await $.ui.open({ id: PANE, title: 'EGM' })
+    return { text: 'EGM-Seitenleiste geöffnet.' }
   })
 
   on('command.run', { command: 'egm-leiste' }, async $ => {
@@ -50,6 +60,29 @@ export const register: Register = on => {
         {COMMANDS.map(c => (
           <Box key={`h-${c.key}`} display="none" hover={{ scope: `egm-${c.key}`, display: 'flex' }}>
             <Text dimColor>{`/egm:egm-${c.key}: ${c.hint}`}</Text>
+          </Box>
+        ))}
+      </Box>
+    )
+  })
+
+  // Die Seitenleiste: ein Knopf je Befehl untereinander. Mit Maus erscheint die Erklärung beim
+  // Drüberfahren unter dem Knopf; auf dem Handy gibt es kein Drüberfahren, dort steht sie immer da.
+  on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
+    const { Box, Button, Text } = $.ui.resolve(e)
+    const fill = (key: string) => () => void $.prompt.fill({ text: `/egm:egm-${key} `, mode: 'replace' })
+    const alwaysShown = e.surface === 'mobile'
+
+    return (
+      <Box flexDirection="column" gap={1}>
+        <Text dimColor>Klick schreibt den Befehl ins Eingabefeld, dann Thema oder Datei dahinter und Enter.</Text>
+        {COMMANDS.map(c => (
+          <Box key={`p-${c.key}`} flexDirection="column">
+            <Button key={`p-${c.key}-btn`} label={c.label} variant={c.key === 'brainstorm' ? 'primary' : undefined}
+              dimColor={c.key === 'bootstrap'} onPress={fill(c.key)} />
+            {alwaysShown
+              ? <Text dimColor>{c.hint}</Text>
+              : <Box display="none" hover={{ display: 'flex' }}><Text dimColor>{c.hint}</Text></Box>}
           </Box>
         ))}
       </Box>

@@ -1,0 +1,5 @@
+{
+  "name": "egm-knoepfe",
+  "owner": { "name": "Michael Sparakowski" },
+  "plugins": [{ "name": "egm-knoepfe", "source": "./" }]
+}

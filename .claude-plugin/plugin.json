@@ -1,0 +1,1 @@
+{ "name": "egm-knoepfe", "version": "0.1.0", "description": "Knopfleiste über dem Eingabefeld für die Befehle des EGM-Plugins, mit Erklärung beim Drüberfahren", "types": "./types/index.d.ts", "license": "Apache-2.0", "author": { "name": "Michael Sparakowski" } }
